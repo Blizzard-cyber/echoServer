@@ -1,0 +1,13 @@
+# 忽略编译生成的临时文件和目标文件
+/.vscode/
+/build/
+/CMakeFiles/
+/CMakeCache.txt
+/cmake_install.cmake
+/Makefile
+*.o
+*.out
+*.exe
+*.log
+*.tmp
+*.swp
