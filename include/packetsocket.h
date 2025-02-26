@@ -32,8 +32,21 @@ class PacketSocket : public TCPSocket {
         
         // 将应用层构造好的packet添加到发送缓冲区
         void queuePacket(char* packet, size_t size);
+
+        // 用于服务器将发送和接收缓冲区设置为同一个
+        void setEchoMode() {
+            sendBuffer = recvBuffer;
+        }
         
-        // ...existing code...
+        // 获取接收缓冲区引用
+        Buffer& getRecvBuffer() {
+            return recvBuffer;
+        }
+        
+        // 获取发送缓冲区引用
+        Buffer& getSendBuffer() {
+            return sendBuffer;
+        }
 };
 
 #endif // PACKETSOCKET_H

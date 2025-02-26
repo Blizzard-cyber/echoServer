@@ -10,12 +10,13 @@
 #include <stdexcept>
 
 class TCPSocket {
-public:
-    explicit TCPSocket(int sockfd = -1);
-    virtual ~TCPSocket();
 
+public:
     int m_sockfd;
     bool m_non_blocking;
+
+    explicit TCPSocket(int sockfd = -1);
+    virtual ~TCPSocket();
 
     void SetNonBlocking(bool enable);
 
@@ -25,9 +26,11 @@ public:
     
     // 连接管理
     virtual void Close();
+    // 根据返回值进行出错处理
+    void CheckError(int ret, const std::string& msg);
     
     // 状态获取
-    int GetFD() const { return m_sockfd; }
+    int getSocketFD() const { return m_sockfd; }
     bool IsNonBlocking() const { return m_non_blocking; }
 };
 
@@ -50,7 +53,9 @@ public:
     bool Bind(uint16_t port, const std::string& ip = "0.0.0.0");
     bool Listen(int backlog = SOMAXCONN);
     
+    // accept 函数封装
+    int Accept();
     // 接受连接（返回客户端socket）
-    TCPClient* Accept();
+    // TCPClient* Accept();
 };
 #endif // TCPSOCKET_H

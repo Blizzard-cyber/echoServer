@@ -125,6 +125,9 @@ TCPServer::TCPServer() {
         throw std::runtime_error("Socket creation failed");
     }
 
+    // 设置为非阻塞模式
+    SetNonBlocking(true);
+
     // 设置地址重用选项
     int yes = 1;
     if (setsockopt(m_sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1) {
@@ -142,7 +145,7 @@ bool TCPServer::Bind(uint16_t port, const std::string& ip) {
     if (inet_pton(AF_INET, ip.c_str(), &addr.sin_addr) <= 0) {
         return false;
     }
-
+    
     return bind(m_sockfd, (struct sockaddr*)&addr, sizeof(addr)) == 0;
 }
 
@@ -150,17 +153,33 @@ bool TCPServer::Listen(int backlog) {
     return listen(m_sockfd, backlog) == 0;
 }
 
-TCPClient* TCPServer::Accept() {
+// TCPClient* TCPServer::Accept() {
+//     struct sockaddr_in client_addr;
+//     socklen_t addr_len = sizeof(client_addr);
+    
+//     int client_fd = accept(m_sockfd, (struct sockaddr*)&client_addr, &addr_len);
+//     if (client_fd == -1) return nullptr;
+
+//     // 创建客户端对象并转移socket所有权
+//     TCPClient* client = new TCPClient();
+//     client->Close();  // 确保清理原有描述符
+//     client->m_sockfd = client_fd;
+//     client->SetNonBlocking(true);  // 客户端默认非阻塞
+//     return client;
+// }
+
+int TCPServer::Accept() {
+    int connfd;
     struct sockaddr_in client_addr;
     socklen_t addr_len = sizeof(client_addr);
-    
-    int client_fd = accept(m_sockfd, (struct sockaddr*)&client_addr, &addr_len);
-    if (client_fd == -1) return nullptr;
+    while ((connfd = accept(m_sockfd, (struct sockaddr*)&client_addr, &addr_len)) < 0 ) {
+        if (errno == EINTR)
+            continue;
+        else if (errno == EWOULDBLOCK)
+            throw std::runtime_error("accept EWOULDBLOCK");
+        else
+            throw std::runtime_error("accept error");
+    }
+    return connfd;
 
-    // 创建客户端对象并转移socket所有权
-    TCPClient* client = new TCPClient();
-    client->Close();  // 确保清理原有描述符
-    client->m_sockfd = client_fd;
-    client->SetNonBlocking(true);  // 客户端默认非阻塞
-    return client;
 }

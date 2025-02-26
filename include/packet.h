@@ -4,33 +4,48 @@
 #include <cstdint>
 #include <vector>
 
-struct Packet {
-    // 报文长度，单位为字节
-    uint32_t length;
-    // 报文内容
-    std::vector<uint8_t> content;
-
-    // 默认构造函数
-    Packet() : length(0), content() {}
-
-    // 根据内容构造 Packet
-    Packet(const std::vector<uint8_t>& data)
-        : length(static_cast<uint32_t>(data.size())), content(data) {}
-
-    // 根据内容构造 Packet，提供 std::vector<char> 支持
-    Packet(const std::vector<char>& data)
-        : length(static_cast<uint32_t>(data.size())), content(data.begin(), data.end()) {}
-    
-
-    void fillContent(uint32_t size) {
-        length = size;
-        content.resize(size);
-    }
 
 
-    uint8_t* getContentPointer() {
-        return content.data();
-    }
+//packet 头部
+struct PacketHeader{
+    //报文类型
+    enum PacketType: uint32_t{
+        PT_DATA_SEND = 0,  //发送数据
+        PT_DATA_ECHO = 1,  //回射数据
+        // PT_FIN_CLIENT = 2,   //客户端关闭连接
+        // PT_FIN_SERVER = 3,   //服务器关闭连接
+        // PT_HEARTBEAT = 4,    //心跳包
+    };
+
+    PacketType type;    //报文类型
+    uint32_t length;    //报文长度
 };
 
+
+class Packet{
+public:
+    PacketHeader header;
+    char* data;
+
+    
+    Packet();
+    Packet(PacketHeader::PacketType type, uint32_t length, const char* data);
+    Packet(const Packet& packet);
+    Packet& operator=(const Packet& packet);
+    ~Packet();
+
+    PacketHeader::PacketType getType() const;
+    uint32_t getLength() const;
+    const char* getData() const;
+
+    void setType(PacketHeader::PacketType type);
+    void setLength(uint32_t length);
+    void setData(const char* data, uint32_t length);
+
+    void clear();
+
+    // void serialize(std::vector<char>& buffer) const;
+    // void deserialize(const std::vector<char>& buffer);
+
+};
 #endif // PACKET_H
