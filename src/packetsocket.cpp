@@ -3,13 +3,17 @@
 #include "packet.h"
 #include <cstring>
 #include <iostream>
+#include <memory>
 
-PacketSocket::PacketSocket(int sockfd, size_t bufSize)
+PacketSocket::PacketSocket(int sockfd, size_t bufSize,bool flag)
     : TCPSocket(sockfd), 
       recvBuffer(bufSize), sendBuffer(bufSize),
       tempBufferSize(bufSize), tempDataLen(0)
 {
     tempBuffer = new char[tempBufferSize];
+    if (!tempBuffer) {
+        throw std::bad_alloc();  // 抛出异常，避免后续访问空指针
+    }
 }
 
 PacketSocket::~PacketSocket() {
@@ -18,7 +22,7 @@ PacketSocket::~PacketSocket() {
 
 // 修改后的 parsePacket 函数：假设 HEADERLEN 为 8（4字节类型 + 4字节长度）
 size_t PacketSocket::parsePacket(const char* data, size_t len) {
-    if(len < HEADERLEN) return 0;
+    if(!data || len < HEADERLEN) return 0;
     // 跳过前4字节类型，从后4字节读取报文体长度
     uint32_t packetLen = 0;
     std::memcpy(&packetLen, data + sizeof(uint32_t), sizeof(uint32_t));
@@ -32,16 +36,21 @@ size_t PacketSocket::parsePacket(const char* data, size_t len) {
 // 修改后的 recvPacket 函数：使用循环多次调用 Recv，将所有完整 packet 分别分配新内存后存入 Buffer
 bool PacketSocket::recvPacket() {
     bool gotPacket = false;
-    while (true) {
+    //while (true) {
          ssize_t recvLen = Recv(tempBuffer + tempDataLen, tempBufferSize - tempDataLen);
-         if(recvLen <= 0)
-             break;
+         if(recvLen <= 0){
+                return false;
+         }
+             
          tempDataLen += recvLen;
          size_t packetSize = parsePacket(tempBuffer, tempDataLen);
-         while(packetSize > 0) {
-              char* completePacket = new char[packetSize];
-              std::memcpy(completePacket, tempBuffer, packetSize);
-              recvBuffer.addPacket(completePacket, packetSize);
+         while(packetSize > 0 && !recvBuffer.isBufferFull() ) {
+            //   char* completePacket = new char[packetSize];
+            //   std::memcpy(completePacket, tempBuffer, packetSize);
+            //   recvBuffer.addPacket(completePacket, packetSize);
+              std::unique_ptr<char[]> completePacket(new char[packetSize]);
+              std::memcpy(completePacket.get(), tempBuffer, packetSize);
+              recvBuffer.addPacket(completePacket.get(), packetSize);
               gotPacket = true;
               size_t remainingSize = tempDataLen - packetSize;
               if(remainingSize > 0)
@@ -49,7 +58,7 @@ bool PacketSocket::recvPacket() {
               tempDataLen = remainingSize;
               packetSize = parsePacket(tempBuffer, tempDataLen);
          }
-    }
+    //}
     return gotPacket;
 }
 
@@ -58,10 +67,14 @@ void PacketSocket::queuePacket(char* packet, size_t size) {
 }
 
 // 修改后的 sendPacket 函数：发送完整 packet 前更新packettype，若原类型为PT_DATA_SEND则改为PT_DATA_ECHO，再发送成功后从发送缓冲区中移除并释放内存
-bool PacketSocket::sendPacket() {
-    if(sendBuffer.isBufferEmpty())
-        return false;
-    char* packet = sendBuffer.getPacket(); // 获取发送缓冲区的头部 packet
+// 为了提升代码重用性，如果是服务端，传入的缓冲区地址即为发送缓冲区地址
+bool PacketSocket::sendPacket(Buffer& _buffer) {
+    if(_buffer.isBufferEmpty()){
+        // std::cerr << "_buffer packet:"<< _buffer.getPacketNum() << std::endl;
+        // std::cerr << "recvBuffer packet:"<< recvBuffer.getPacketNum() << std::endl;
+            return false;
+        }
+    char* packet = _buffer.getPacket(); // 获取发送缓冲区的头部 packet
     
     // 获取报文长度：从 header 的第二个4字节读取
     uint32_t packetLen = 0;
@@ -89,8 +102,8 @@ bool PacketSocket::sendPacket() {
     }
     
     if(bytesSent == sendSize) {
-        sendBuffer.removePacket(packet, sendSize);
-        delete [] packet;
+        _buffer.removePacket(packet, sendSize);
+        //delete [] packet;
         return true;
     }
     return false;

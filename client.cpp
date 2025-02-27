@@ -75,7 +75,7 @@ int main() {
                     // 写事件：生成数据、封装 packet 并发送
                     if (events & EPOLLOUT) {       
                         packPacket(ps);                      
-                        if(!ps.sendPacket()) {
+                        if(!ps.sendPacket(ps.getSendBuffer())) {
                             std::cerr << "Failed to send packet." << std::endl;
                         } 
                     }

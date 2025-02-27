@@ -44,6 +44,11 @@ class Buffer {
         bool isBufferEmpty() const {
             return packets.empty();
         }
+
+        // 获取当前packet数量
+        int getPacketNum() const {
+            return packetNum;
+        }
 };
 
 #endif  // BUFFER_H

@@ -21,22 +21,22 @@ class PacketSocket : public TCPSocket {
         size_t parsePacket(const char* data, size_t len);
         
     public:
-        PacketSocket(int sockfd, size_t bufSize);
+        PacketSocket(int sockfd, size_t bufSize,bool flag = false);
         virtual ~PacketSocket();
         
         // 从 TCP 内核缓冲区读取数据，组装完整packet到接收缓冲区
         bool recvPacket();
         
         // 从发送缓冲区取出packet并发送，发送成功后删除该packet指针
-        bool sendPacket();
+        bool sendPacket(Buffer& _buffer);
         
         // 将应用层构造好的packet添加到发送缓冲区
         void queuePacket(char* packet, size_t size);
 
-        // 用于服务器将发送和接收缓冲区设置为同一个
-        void setEchoMode() {
-            sendBuffer = recvBuffer;
-        }
+        // // 用于服务器将发送和接收缓冲区设置为同一个
+        // void setEchoMode() {
+        //     sendBuffer = recvBuffer;
+        // }
         
         // 获取接收缓冲区引用
         Buffer& getRecvBuffer() {

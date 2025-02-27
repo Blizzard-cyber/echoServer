@@ -52,20 +52,28 @@ int main() {
                     auto it = clientMap.find(fd);
                     if (it != clientMap.end()) {
                         PacketSocket* ps = it->second;
-                        if (events & EPOLLIN) {
-                            // 尝试接收数据
-                            if (ps->recvPacket()) {
-                                // 成功接收到完整数据包，接下来发送数据包
-                                if(ps->sendPacket()) {
-                                    std::cout << "Echo packet sent." << std::endl;
-                                } else {
-                                    std::cerr << "Failed to send echo packet." << std::endl;
+                        try {
+                            if (events & EPOLLIN) {
+                                // 尝试接收数据并处理，如果对端关闭则抛出异常
+                                if (ps->recvPacket()) {
+                                    // 接收到完整数据包后发送回echo数据包
+                                    if(ps->sendPacket(ps->getRecvBuffer())) {
+                                        std::cout << "Echo packet sent." << std::endl;
+                                    } else {
+                                        std::cerr << "Failed to send echo packet." << std::endl;
+                                    }
                                 }
-                                
                             }
+                        } catch (const std::exception& ex) {
+                            // 处理客户端连接关闭或错误，不影响服务器继续监听
+                            std::cerr << "Client " << fd << " connection error: " << ex.what() 
+                                      << ". Removing client." << std::endl;
+                            epoller.delfd(fd);
+                            delete ps;
+                            clientMap.erase(it);
                         }
-                        else if (events & EPOLLERR) {
-                            // 错误事件处理
+                        if (events & EPOLLERR) {
+                            // 错误事件处理也移除该客户端
                             std::cerr << "Error event on client: " << fd << std::endl;
                             epoller.delfd(fd);
                             delete ps;
@@ -84,8 +92,9 @@ int main() {
         }
     } catch (const EpollException& ex) {
         std::cerr << "Epoll exception: " << ex.what() << std::endl;
-    } catch (const std::exception& ex) {
-        std::cerr << "Exception: " << ex.what() << std::endl;
-    }
+    } 
+    // catch (const std::exception& ex) {
+    //     std::cerr << "Exception: " << ex.what() << std::endl;
+    // }
     return 0;
 }

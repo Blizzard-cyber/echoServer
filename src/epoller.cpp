@@ -1,6 +1,7 @@
 #include "epoller.h"
 #include <sys/resource.h>
 #include <strings.h>
+#include <iostream>
 
 /** epoll_create **/
 Epoller::Epoller(int flags, int noFile) : fdNumber(0), nReady(0)
@@ -29,7 +30,7 @@ void Epoller::addfd(int fd, uint32_t events, bool ETorNot)
     event.data.fd = fd;
     if( ::epoll_ctl(m_epollfd, EPOLL_CTL_ADD, fd, &event) == -1 )
         throw EpollException("epoll_ctl_add error");
-    ++ fdNumber;
+        ++ fdNumber;
 }
 void Epoller::modfd(int fd, uint32_t events, bool ETorNot)
 {
@@ -45,9 +46,12 @@ void Epoller::delfd(int fd)
 {
     bzero(&event, sizeof(event));
     event.data.fd = fd;
-    if( ::epoll_ctl(m_epollfd, EPOLL_CTL_DEL, fd, &event) == -1 )
-        throw EpollException("epoll_ctl_del error");
-    -- fdNumber;
+    if( ::epoll_ctl(m_epollfd, EPOLL_CTL_DEL, fd, &event) == -1 ) {
+        
+        if(errno != ENOENT && errno != EBADF)
+            throw EpollException("epoll_ctl_del error");
+    }
+    --fdNumber;
 }
 
 /** epoll_wait **/

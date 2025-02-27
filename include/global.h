@@ -1,20 +1,13 @@
-#ifndef Global_H
-#define Global_H
+#ifndef GLOBAL_H
+#define GLOBAL_H
 
-const int MAX_EVENTS = 100;  //epoll 最大事件数
-const int CLIENT_NUM = 10;   //客户端（压力发生器数）
+extern const int MAX_EVENTS;    // epoll 最大事件数
+extern const int CLIENT_NUM;    // 客户端（压力发生器数）
+extern const int HEADERLEN;     // 包头长度
 
-const int HEADERLEN = 8;     //包头长度
+extern const int SERVER_PORT;   // 服务器监听端口
+extern const char* SERVER_IP;   // 服务器监听地址
+extern const int MAX_CONN;      // 服务器最大连接数
+extern const int LISTENQ;       // 服务器监听队列长度
 
-//服务器监听端口
-const int SERVER_PORT = 8080;
-//服务器监听地址（环回地址）
-const char* SERVER_IP = "127.0.0.1";
-// 服务器最大连接数
-const int MAX_CONN = 100;
-// 服务器监听队列长度
-const int LISTENQ = 20;
-
-// 客户端单次生产数量
-const int CLIENT_ONCE = 10;
-#endif // Global_H
+#endif // GLOBAL_H

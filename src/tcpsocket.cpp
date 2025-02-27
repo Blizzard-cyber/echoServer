@@ -28,7 +28,7 @@ void TCPSocket::SetNonBlocking(bool enable) {
     m_non_blocking = enable;
 }
 
-ssize_t TCPSocket::Send(const void* buf, size_t len, int flags=0) {
+ssize_t TCPSocket::Send(const void* buf, size_t len, int flags) {
     ssize_t ret = send(m_sockfd, buf, len, flags);
     if(ret == -1) {
         // 处理对端断开或其他错误
@@ -41,7 +41,7 @@ ssize_t TCPSocket::Send(const void* buf, size_t len, int flags=0) {
     return ret;
 }
 
-ssize_t TCPSocket::Recv(void* buf, size_t len, int flags=0) {
+ssize_t TCPSocket::Recv(void* buf, size_t len, int flags) {
     ssize_t ret = recv(m_sockfd, buf, len, flags);
     if(ret == 0) {
         // 对端关闭连接

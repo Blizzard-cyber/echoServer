@@ -1,9 +1,11 @@
 #include "buffer.h"
 #include <algorithm>
 #include <iostream>
+#include "global.h"
 
 Buffer::Buffer(size_t size)
-    : bufferSize(size), maxPacketNum(10), packetNum(0), totalSize(0) {
+    : bufferSize(size), packetNum(0), totalSize(0) {
+        maxPacketNum = bufferSize / HEADERLEN;  
 }
 
 Buffer::~Buffer() {
@@ -31,9 +33,12 @@ void Buffer::addPacket(char* packet, size_t size) {
             packets.push_back(pw);
             packetNum++;
             totalSize += size;
+            
         } else {
             // 缓冲区已满，可根据实际需求抛出异常或做其他处理
-            std::cout << "Buffer is full." << std::endl;
+            //std::cout << packetNum << std::endl;
+            // return false; //添加失败
+        
         }
     }
 }
