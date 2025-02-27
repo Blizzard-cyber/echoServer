@@ -15,7 +15,7 @@ Buffer::~Buffer() {
     }
 }
 
-void Buffer::addPacket(char* packet, size_t size) {
+bool Buffer::addPacket(char* packet, size_t size) {
     // 查找是否已存在相同 packet 指针
     auto it = std::find_if(packets.begin(), packets.end(),
         [packet](const PacketWrapper& pw) {
@@ -35,12 +35,11 @@ void Buffer::addPacket(char* packet, size_t size) {
             totalSize += size;
             
         } else {
-            // 缓冲区已满，可根据实际需求抛出异常或做其他处理
-            //std::cout << packetNum << std::endl;
-            // return false; //添加失败
-        
+            delete[] packet; // 释放无法添加的 packet
+            return false;       
         }
     }
+    return true;
 }
 
 void Buffer::removePacket(char* packet, size_t size) {
@@ -69,6 +68,6 @@ char* Buffer::getPacket() {
     if (!packets.empty()) {
         return packets.front().packet;
     }
-    std::cout << "Buffer is empty." << std::endl;
+    //std::cout << "Buffer is empty." << std::endl;
     return nullptr;
 }

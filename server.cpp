@@ -8,6 +8,10 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+
+//全局clientMap
+std::unordered_map<int, PacketSocket*> clientMap;
+
 int main() {
     try {
         // 创建服务器并绑定监听端口
@@ -27,8 +31,8 @@ int main() {
         // 将服务器套接字添加到 epoll 中监控可读事件
         epoller.addfd(server.getSocketFD(), EPOLLIN, true);
         
-        // 用于管理客户端连接，将套接字fd与 PacketSocket 对象关联（注意：这里只做示例，内存管理需要完善）
-        std::unordered_map<int, PacketSocket*> clientMap;
+        // 用于管理客户端连接，将套接字fd与 PacketSocket 对象关联
+        //std::unordered_map<int, PacketSocket*> clientMap;
         
         while (true) {
             int nReady = epoller.wait(-1);
@@ -58,7 +62,7 @@ int main() {
                                 if (ps->recvPacket()) {
                                     // 接收到完整数据包后发送回echo数据包
                                     if(ps->sendPacket(ps->getRecvBuffer())) {
-                                        std::cout << "Echo packet sent." << std::endl;
+                                        // std::cout << "Echo packet sent." << std::endl;
                                     } else {
                                         std::cerr << "Failed to send echo packet." << std::endl;
                                     }
@@ -72,13 +76,13 @@ int main() {
                             delete ps;
                             clientMap.erase(it);
                         }
-                        if (events & EPOLLERR) {
-                            // 错误事件处理也移除该客户端
-                            std::cerr << "Error event on client: " << fd << std::endl;
-                            epoller.delfd(fd);
-                            delete ps;
-                            clientMap.erase(it);
-                        }
+                        // if (events & EPOLLERR) {
+                        //     // 错误事件处理也移除该客户端
+                        //     std::cerr << "Error event on client: " << fd << std::endl;
+                        //     epoller.delfd(fd);
+                        //     delete ps;
+                        //     clientMap.erase(it);
+                        // }
                     } else {
                         std::cerr << "Unknown client fd: " << fd << std::endl;
                     }
@@ -86,15 +90,19 @@ int main() {
             }
         }
         
+    } 
+    catch (const EpollException& ex) {
+        std::cerr << "Epoll exception: " << ex.what() << std::endl;
+        
+    } 
+   
+    catch (const std::exception& ex) {
+        std::cerr << "Exception: " << ex.what() << std::endl;
         // 清理客户端连接
         for (auto& pair : clientMap) {
             delete pair.second;
         }
-    } catch (const EpollException& ex) {
-        std::cerr << "Epoll exception: " << ex.what() << std::endl;
-    } 
-    // catch (const std::exception& ex) {
-    //     std::cerr << "Exception: " << ex.what() << std::endl;
-    // }
+        clientMap.clear();
+    }
     return 0;
 }

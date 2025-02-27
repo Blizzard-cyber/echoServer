@@ -17,7 +17,7 @@ Epoller::Epoller(int flags, int noFile) : fdNumber(0), nReady(0)
 }
 Epoller::~Epoller()
 {
-    this -> close();
+    this -> Close();
 }
 
 /** epoll_ctl **/

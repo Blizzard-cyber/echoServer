@@ -27,7 +27,7 @@ class Buffer {
         ~Buffer();
 
         // 添加packet指针，并初始化引用计数为1
-        void addPacket(char* packet, size_t size);
+        bool addPacket(char* packet, size_t size);
 
         // 删除packet指针或减少其引用计数
         void removePacket(char* packet, size_t size);

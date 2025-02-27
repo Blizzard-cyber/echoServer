@@ -46,7 +46,7 @@ public:
     }
 
     // 关闭 epoll 实例
-    void close()
+    void Close()
     {
         if (isValid())
         {

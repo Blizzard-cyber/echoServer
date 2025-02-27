@@ -21,8 +21,8 @@ public:
     void SetNonBlocking(bool enable);
 
     // 基础IO操作
-    ssize_t Send(const void* buf, size_t len, int flags = 0);
-    ssize_t Recv(void* buf, size_t len, int flags = 0);
+    ssize_t Send(const char* buf, size_t len, int flags = 0);
+    ssize_t Recv(char* buf, size_t len, int flags = 0);
     
     // 连接管理
     virtual void Close();
