@@ -7,6 +7,7 @@
 #include "error.h"       
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <cstring>
 
 
 //全局clientMap
@@ -18,11 +19,11 @@ int main() {
         TCPServer server;
         if (!server.Bind(SERVER_PORT, "0.0.0.0")) {
             std::cerr << "Bind failed" << std::endl;
-            return 1;
+            return -1;
         }
         if (!server.Listen(LISTENQ)) {
             std::cerr << "Listen failed" << std::endl;
-            return 1;
+            return -1;
         }
         std::cout << "Server started, listening on port: " << SERVER_PORT << std::endl;
         
@@ -41,16 +42,19 @@ int main() {
                 uint32_t events = epoller.getEvents(i);
                 // 如果事件发生在监听套接字上，则处理新连接
                 if (fd == server.getSocketFD()) {
-                    // 调用封装后的 Accept 函数
-                    int connfd = server.Accept();
-                    //if (connfd != -1) {  // Check if connection is valid
+                    while (true) {
+                        int connfd = server.Accept();
+                        if (connfd < 0) {
+                            break;
+                        }
+                        
                         // 使用 PacketSocket 封装客户端 socket，缓冲区大小为1024字节
                         PacketSocket* ps = new PacketSocket(connfd, 1024);
                         clientMap[connfd] = ps;
                         // 将新连接添加到 epoll 监听中，采用水平触发模式
                         epoller.addfd(connfd, EPOLLIN, false);
                         std::cout << "New client connected: " << connfd << std::endl;
-                    //}
+                    }
                 } else {
                     // 客户端套接字有事件
                     auto it = clientMap.find(fd);

@@ -18,7 +18,7 @@ public:
     explicit TCPSocket(int sockfd = -1);
     virtual ~TCPSocket();
 
-    void SetNonBlocking(bool enable);
+    void SetNonBlocking(int sockfd =-1);
 
     // 基础IO操作
     ssize_t Send(const char* buf, size_t len, int flags = 0);

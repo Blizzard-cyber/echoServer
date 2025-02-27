@@ -50,14 +50,15 @@ void packPacket(PacketSocket& ps) {
     ps.queuePacket(packet, packetSize);
 }
 
-int main() {
+
+void clientThread(int threadId) {
     try {
         TCPClient client;
         if (!client.Connect(SERVER_IP, SERVER_PORT, true)) {
             std::cerr << "Connection failed!" << std::endl;
-            return -1;
+            return ;
         }
-        std::cout << "Connected to server." << std::endl;
+        std::cout << "Thread:"<< threadId <<"   Connected to server." << std::endl;
         // 使用 PacketSocket 封装客户端 socket（缓冲区设为1024字节）
         PacketSocket ps(client.getSocketFD(), 1024);
         
@@ -65,6 +66,7 @@ int main() {
         Epoller epoller(0, 1024);
         epoller.addfd(ps.getSocketFD(), EPOLLIN | EPOLLOUT, false);
         
+       
         // 主循环：监听写就绪（发送数据）和读就绪（接收数据）
         while (true) {
             int nReady = epoller.wait(-1);
@@ -106,5 +108,27 @@ int main() {
      } catch (const std::exception& ex) {
         std::cerr << "Client exception: " << ex.what() << std::endl;
     }
+}
+
+
+int main(int argc, char* argv[]) {
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " <num_clients>" << std::endl;
+        return 1;
+    }
+
+    int numClients = std::stoi(argv[1]);
+    std::vector<std::thread> threads;
+
+    // 创建多个客户端线程
+    for (int i = 0; i < numClients; ++i) {
+        threads.emplace_back(clientThread, i);
+    }
+
+    // 等待所有线程完成
+    for (auto& t : threads) {
+        t.join();
+    }
+
     return 0;
 }

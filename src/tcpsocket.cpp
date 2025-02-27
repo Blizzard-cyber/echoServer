@@ -16,16 +16,13 @@ TCPSocket::~TCPSocket() {
     Close();
 }
 
-// enable 为 true 时设置非阻塞模式，为 false 时设置阻塞模式
-void TCPSocket::SetNonBlocking(bool enable) {
-    int flags = fcntl(m_sockfd, F_GETFL, 0);
-    if (flags == -1) throw std::runtime_error("fcntl(F_GETFL) failed");
 
-    flags = enable ? (flags | O_NONBLOCK) : (flags & ~O_NONBLOCK);
-    if (fcntl(m_sockfd, F_SETFL, flags) == -1)
-        throw std::runtime_error("fcntl(F_SETFL) failed");
-    
-    m_non_blocking = enable;
+void TCPSocket::SetNonBlocking(int sockfd) {
+    int flags = fcntl(sockfd, F_GETFL, 0);  
+    if (flags == -1) throw std::runtime_error("fcntl(F_GETFL) failed");  
+
+    fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);  
+    m_non_blocking = true;  
 }
 
 ssize_t TCPSocket::Send(const char* buf, size_t len, int flags) {
@@ -82,7 +79,7 @@ bool TCPClient::Connect(const std::string& ip, uint16_t port, bool non_block) {
         m_sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
         if (m_sockfd == -1) continue;
 
-        SetNonBlocking(non_block);  // 设置非阻塞模式
+        SetNonBlocking(m_sockfd);  // 设置非阻塞模式
 
         if (connect(m_sockfd, rp->ai_addr, rp->ai_addrlen) == 0) {
             freeaddrinfo(result);
@@ -127,7 +124,7 @@ TCPServer::TCPServer() {
     }
 
     // 设置为非阻塞模式
-    SetNonBlocking(true);
+    SetNonBlocking(m_sockfd);
 
     // 设置地址重用选项
     int yes = 1;
@@ -173,14 +170,16 @@ int TCPServer::Accept() {
     int connfd;
     struct sockaddr_in client_addr;
     socklen_t addr_len = sizeof(client_addr);
-    while ((connfd = accept(m_sockfd, (struct sockaddr*)&client_addr, &addr_len)) < 0 ) {
-        if (errno == EINTR)
-            continue;
-        else if (errno == EWOULDBLOCK)
-            throw std::runtime_error("accept EWOULDBLOCK");
+    connfd = accept(m_sockfd, (struct sockaddr*)&client_addr, &addr_len);
+    if (connfd < 0) {
+        if (errno == EINTR || errno == EWOULDBLOCK)
+            return -1;
         else
             throw std::runtime_error("accept error");
     }
+    //设置为非阻塞模式
+    SetNonBlocking(connfd);
+    
     return connfd;
 
 }
