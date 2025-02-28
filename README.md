@@ -1,7 +1,7 @@
 # echoServer
 
 ## 项目简介
-该项目实现了一个基于 TCP 和 epoll 的回声服务器及客户端。服务器使用单线程 Epool 驱动处理高并发连接，并通过自定义数据包协议实现数据的回射处理。详细的设计、性能测试及优化分析详见 [report.md](./report.md)。
+该项目实现了一个基于 TCP 和 epoll 的回声服务器及客户端。服务器使用单线程 Epool 驱动处理高并发连接，并通过自定义数据包协议实现数据的回射处理。详细的设计、性能测试及优化分析详见 [技术报告](./report.md)。
 
 ## 设计说明
 
@@ -15,11 +15,11 @@
 - **Buffer**：管理接收和发送缓冲区，利用引用计数减少数据拷贝开销。
 
 ### 3. 报告引用
-详细设计思路、系统架构图、时序图、性能测试报告及优化分析均记录在 [report.md](./report.md)。
+详细设计思路、系统架构图、时序图、性能测试报告及优化分析均记录在 [技术报告](./report.md)。
 
 ## 目录结构
 ```
-/home/admin000/NDSL/echoServer
+echoServer
 ├── CMakeLists.txt
 ├── include
 │   ├── buffer.h
@@ -33,7 +33,7 @@
 │   ├── epoller.cpp
 │   ├── packetsocket.cpp
 │   ├── tcpsocket.cpp
-│   └── ...其他源文件
+│   └── ...
 ├── client.cpp
 ├── server.cpp
 ├── README.md
