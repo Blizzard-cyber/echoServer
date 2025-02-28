@@ -18,7 +18,7 @@ std::string generateRandomData() {
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::default_random_engine engine(seed);
     // 随机数据长度介于1到100之间
-    std::uniform_int_distribution<int> lengthDist(1, 100);
+    std::uniform_int_distribution<int> lengthDist(1, MAX_DATA_LEN);
     int len = lengthDist(engine);
     
     // 随机生成可打印字符范围的数据（ASCII 32 到 126）
@@ -31,6 +31,7 @@ std::string generateRandomData() {
     }
     return data;
 }
+
 
 // 生产并打包一个packet，并将其加入发送缓冲区
 void packPacket(PacketSocket& ps) {
@@ -69,12 +70,21 @@ void clientThread(int threadId) {
        
         // 主循环：监听写就绪（发送数据）和读就绪（接收数据）
         while (true) {
-            int nReady = epoller.wait(-1);
+            int nReady = epoller.wait(CLIENT_EPOLL_TIMEOUT);
             for (int i = 0; i < nReady; ++i) {
                 int fd = epoller.getEventOccurfd(i);
                 uint32_t events = epoller.getEvents(i);
                 if (fd == ps.getSocketFD()) {
                     // 写事件：生成数据、封装 packet 并发送
+                    // if (events & EPOLLOUT) {
+                        
+                    //     for (int i = 0; i < BATCH_SIZE; ++i) {
+                    //         packPacket(ps);
+                    //         if (!ps.sendPacket(ps.getSendBuffer())) {
+                    //             break;
+                    //         }
+                    //     }
+                    // }
                     if (events & EPOLLOUT) {       
                         packPacket(ps);                      
                         if(!ps.sendPacket(ps.getSendBuffer())) {

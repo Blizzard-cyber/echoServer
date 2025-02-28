@@ -8,3 +8,7 @@ const int SERVER_PORT = 8080;
 const char* SERVER_IP = "127.0.0.1";
 const int MAX_CONN = 100;
 const int LISTENQ = 100;
+
+const int MAX_DATA_LEN = 1000;
+
+const int CLIENT_EPOLL_TIMEOUT = -1;
